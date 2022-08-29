@@ -1,13 +1,15 @@
 import os
 import sys
 import numpy as np
+import time
 
-print = sys.stdout.write
+import colourUtils
+write = sys.stdout.write
 
 os.system("cls")
 os.system("mode con:cols=100 lines=50")
 # print("\x1b[48;2;0;150;0mHello\x1b[0m")
-# print("test")
+# write("test")
 
 class Screen:
     def __init__(self, width=50, height=50):
@@ -23,10 +25,10 @@ class Screen:
                 rp, gp, bp, ap = c.round().astype(int) 
                 if (r, g, b, a) != (rp, gp, bp, ap):
                     r, g, b, a = rp, gp, bp, ap
-                    print(f"\x1b[48;2;{r};{g};{b}m")
-                print(" ")
-            print("\n")
-        print("\r\x1b[0m")
+                    write(f"\x1b[48;2;{r};{g};{b}m")
+                write(" ")
+            write("\n")
+        write("\r\x1b[0m")
     
     def renderPixel(self, pos, colour) -> bool:
         x, y = pos
@@ -92,9 +94,12 @@ class Screen:
 
 screen = Screen()
 
-screen.renderLine((1, 7), (20, 2),  np.array((1,0,0,1)))
-screen.renderLine((22, 2), (40, 7), (.5, 0, 0, 1))
+points = np.array([(0, 20), (15, 15), (20, 0), (15, -15), (0, -20), (-15, -15), (-20, 0), (-15, 15), (0, 20)])
+points = points + np.array((25, 25))
+colours = colourUtils.spectrum(8)
+for i in range(8):
+    p1, p2 = points[i:i+2]
+    screen.renderLine(p1, p2, colours[i])
 
-screen.renderLine((1, 9), (7, 20), (0,0,1,1))
-screen.renderLine((1, 40), (7, 22), (0,0,0.5,1))
+
 screen.displayScreenBuffer()
