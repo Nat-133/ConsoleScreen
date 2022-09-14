@@ -4,8 +4,9 @@ import numpy as np
 import time
 
 import colourUtils
+import utils
 write = sys.stdout.write
-
+"""subprocess.run(["powershell", "-Command", cmd], capture_output=True)"""
 os.system("cls")
 os.system("mode con:cols=100 lines=50")
 # print("\x1b[48;2;0;150;0mHello\x1b[0m")
@@ -13,27 +14,34 @@ os.system("mode con:cols=100 lines=50")
 
 class Screen:
     def __init__(self, width=50, height=50):
-        self._screenBuffer = np.array([[(0.0, 0.0, 0.0, 1.0) for _ in range(width*2)] for _ in range(height)])
-        os.system(f"mode con: cols={width*2} lines={height}")
+        self._screenBuffer = np.array([[(0.0, 0.0, 0.0, 1.0) for _ in range(width)] for _ in range(height)])
+        #os.system(f"mode con: cols={width*2} lines={height}")
+        os.system(f"mode con: cols={width} lines={height}")
+        os.system(f"Set-ConsoleFont 8")
+
+    def clearBuffer(self):
+        self._screenBuffer.fill(0)
 
     def displayScreenBuffer(self):
-        os.system("cls")
+        # os.system("cls")
         r, g, b, a = -1, -1, -1, -1
+        displayString = "\x1b[1;1H"
         for row in self._screenBuffer[:-1]:
             for colour in row:
                 c = colour*255
                 rp, gp, bp, ap = c.round().astype(int) 
                 if (r, g, b, a) != (rp, gp, bp, ap):
                     r, g, b, a = rp, gp, bp, ap
-                    write(f"\x1b[48;2;{r};{g};{b}m")
-                write(" ")
-            write("\n")
-        write("\r\x1b[0m")
+                    displayString += f"\x1b[48;2;{r};{g};{b}m"
+                displayString += " "
+            displayString += "\n"
+        displayString += "\r\x1b[0m"
+        write(displayString)
     
     def renderPixel(self, pos, colour) -> bool:
         x, y = pos
-        self._screenBuffer[y, 2*x] = colour
-        self._screenBuffer[y, 2*x + 1] = colour
+        self._screenBuffer[y, x] = colour
+        #self._screenBuffer[y, 2*x + 1] = colour
         return True
 
     def plotShallowLine(self, pos0, pos1, colour):
@@ -92,14 +100,34 @@ class Screen:
             else:
                 self.plotShallowLine(end, start, colour)
 
-screen = Screen()
 
-points = np.array([(0, 20), (15, 15), (20, 0), (15, -15), (0, -20), (-15, -15), (-20, 0), (-15, 15), (0, 20)])
-points = points + np.array((25, 25))
-colours = colourUtils.spectrum(8)
-for i in range(8):
-    p1, p2 = points[i:i+2]
-    screen.renderLine(p1, p2, colours[i])
+try:
+    utils.changeFontSize(2)
+    screen = Screen(200,200)
+
+    points = np.array([(0, 20), (15, 15), (20, 0), (15, -15), (0, -20), (-15, -15), (-20, 0), (-15, 15), (0, 20)])
+    points = points*4
+    points = points + np.array((25, 25))*4
+    colours = colourUtils.spectrum(8)
+    for i in range(8):
+        p1, p2 = points[i:i+2]
+        screen.renderLine(p1, p2, colours[i])
 
 
-screen.displayScreenBuffer()
+    screen.displayScreenBuffer()
+    angle = 0
+
+    while True:
+        screen.clearBuffer()
+        centre = np.array((100, 100))
+        endPoint = (np.array((np.cos(angle), np.sin(angle))) * 75).round().astype(int) + centre
+        screen.renderLine(centre, endPoint, (1,1,1,1))
+        screen.displayScreenBuffer()
+        angle += 0.01
+        #time.sleep(0.1)
+
+        
+finally:
+    os.system("mode con:cols=50 lines=50")
+    utils.changeFontSize(16)
+    print("finished")
